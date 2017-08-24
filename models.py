@@ -1,8 +1,7 @@
-from flask_bcrypt import Bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
-from app import app
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
 
 class Users(db.Model):
@@ -10,12 +9,12 @@ class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80))
     email = db.Column(db.String(120), unique=True)
-    password = db.Column(db.String(20))
+    password = db.Column(db.String(500))
 
     def __init__(self, username, email, password):
         self.username = username
         self.email = email
-        self.password = Bcrypt().generate_password_hash(password).decode()
+        self.password = generate_password_hash(password)
 
     def save(self):
         """Save new users and changes to the database"""

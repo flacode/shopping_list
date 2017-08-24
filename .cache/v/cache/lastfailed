@@ -1,0 +1,8 @@
+{
+  "test_run.py": true,
+  "test_run.py::UsersTestCase::test_user_account_creation": true,
+  "tests/test_app.py": true,
+  "tests/test_run.py::UsersTestCase::test_empty_db": true,
+  "tests/test_run.py::UsersTestCase::test_user_account_creation": true,
+  "tests/test_run.py::UsersTestCase::test_user_login": true
+}
