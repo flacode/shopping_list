@@ -7,7 +7,7 @@ db = SQLAlchemy()
 class Users(db.Model):
     """Class for user attributes and methods"""
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80))
+    username = db.Column(db.String(80), unique=True)
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(500))
 
@@ -22,12 +22,9 @@ class Users(db.Model):
         db.session.commit()
 
     def delete(self):
+        """Delete user from the database"""
         db.session.delete(self)
         db.session.commit()
-
-    @staticmethod
-    def get_all():
-        return Users.query.all()
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -42,10 +39,10 @@ class ShoppingLists(db.Model):
     user = db.relationship('Users',
                            backref=db.backref('shopping_lists', lazy='dynamic'))
 
-    def __init__(self, name, user, due_date=None):
+    def __init__(self, name, user_id, due_date=None):
         self.name = name
         self.due_date = due_date
-        self.user = user
+        self.user_id = user_id
 
     def __repr__(self):
         return '<Shopping List: %r>' % self.name
@@ -53,6 +50,11 @@ class ShoppingLists(db.Model):
     def save(self):
         """Save new users and changes to the database"""
         db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        """Delete shopping list from the database"""
+        db.session.delete(self)
         db.session.commit()
 
 
@@ -67,10 +69,10 @@ class Items(db.Model):
     shopping_list = db.relationship('ShoppingLists',
                                     backref=db.backref('items', lazy='dynamic'))
 
-    def __init__(self, name, quantity, shopping_list, bought_from=None, status=None):
+    def __init__(self, name, quantity, shopping_list_id, bought_from=None, status=None):
         self.name = name
         self.quantity = quantity
-        self.shopping_list = shopping_list
+        self.shopping_list_id = shopping_list_id
         self.bought_from = bought_from
         self.status = status
 
@@ -81,3 +83,9 @@ class Items(db.Model):
         """Save new users and changes to the database"""
         db.session.add(self)
         db.session.commit()
+
+    def delete(self):
+        """Delete item from the database"""
+        db.session.delete(self)
+        db.session.commit()
+
