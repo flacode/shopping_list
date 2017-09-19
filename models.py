@@ -1,5 +1,8 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
+from run import app
+import jwt
 
 db = SQLAlchemy()
 
@@ -25,6 +28,29 @@ class Users(db.Model):
         """Delete user from the database"""
         db.session.delete(self)
         db.session.commit()
+
+    def generate_token(self, user_id):
+        """Generate token for authentication and return string"""
+
+        try:
+            # set up payload with expiration date
+            payload = {
+                'exp': datetime.utcnow() + timedelta(minutes=15),
+                'iat': datetime.utcnow(),
+                'sub': user_id
+            }
+            return jwt.encode(
+                payload,
+                app.config.get('SECRET_KEY'),
+                algorithm='HS256'
+            )
+        except Exception as e:
+            return str(e)
+
+    @staticmethod
+    def decode_token(token):
+        pass
+        
 
     def __repr__(self):
         return '<User %r>' % self.username

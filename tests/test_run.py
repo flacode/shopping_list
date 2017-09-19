@@ -13,8 +13,6 @@ class UsersTestCase(unittest.TestCase):
         app.testing = True
         self.app = app.test_client()
         self.user = {"username": "flacode", "password": "flavia", "email": "fnshem@gmail.com"}
-        self.shopping_list = {"name": "bakery", "user_id":1, "due_date": "2017-08-17"}
-        self.item = {"name": "sweetpotatoes", "quantity":6, "bought_from": "kalerwe", "status": "false"}
         with app.app_context():
             db.drop_all()
             db.create_all()
@@ -94,6 +92,22 @@ class UsersTestCase(unittest.TestCase):
         self.assertIn('No user information found', str(reset.data))
 
 
+class ShoppingListTestCase(unittest.TestCase):
+    """Testcases for the ShoppingLists class"""
+    def setUp(self):
+        self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
+        app.testing = True
+        self.app = app.test_client()
+        self.user = {"username": "flacode", "password": "flavia", "email": "fnshem@gmail.com"}
+        self.shopping_list = {"name": "bakery", "user_id":1, "due_date": "2017-08-17"}
+        with app.app_context():
+            db.drop_all()
+            db.create_all()
+
+    def tearDown(self):
+        os.close(self.db_fd)
+        os.unlink(app.config['DATABASE'])
+
     def test_create_shopping_list_for_registered_user(self):
         """Test create shopping list for user"""
         self.app.post('/auth/register', data=json.dumps(self.user),
@@ -122,7 +136,7 @@ class UsersTestCase(unittest.TestCase):
         shopping_lists = self.app.get('/shoppinglists/')
         self.assertIn('shopping_lists', str(shopping_lists.data))
                 
-    def test_view_on_shopping_list(self):
+    def test_view_one_shopping_list(self):
         """Test if user can view saved shopping list"""
         # if shopping list is not saved in the database
         result = self.app.get('/shoppinglists/1')
@@ -163,6 +177,24 @@ class UsersTestCase(unittest.TestCase):
         deleted = self.app.delete('/shoppinglists/1')
         self.assertEqual(deleted.status_code, 200)
         self.assertIn('Shopping list successfully deleted', str(deleted.data))
+
+
+class ItemsTestCase(unittest.TestCase):
+    """Testcases for the Items class"""
+    def setUp(self):
+        self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
+        app.testing = True
+        self.app = app.test_client()
+        self.user = {"username": "flacode", "password": "flavia", "email": "fnshem@gmail.com"}
+        self.shopping_list = {"name": "bakery", "user_id":1, "due_date": "2017-08-17"}
+        self.item = {"name": "sweetpotatoes", "quantity":6, "bought_from": "kalerwe", "status": "false"}
+        with app.app_context():
+            db.drop_all()
+            db.create_all()
+
+    def tearDown(self):
+        os.close(self.db_fd)
+        os.unlink(app.config['DATABASE'])
 
     def test_add_item_to_shopping_list(self):
         """Test to add items to a shopping list"""

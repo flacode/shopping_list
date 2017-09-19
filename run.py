@@ -14,7 +14,7 @@ POSTGRES = {
 app.config['DEBUG'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:\
 %(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
-SECRET_KEY = 'this-really-needs-to-be-changed'
+app.config['SECRET_KEY'] = 'this-really-needs-to-be-changed'
 db.init_app(app)  # connect sqlalchmey to app
 
 
