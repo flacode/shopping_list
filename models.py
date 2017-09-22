@@ -1,7 +1,6 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
-from run import app
 import jwt
 
 db = SQLAlchemy()
@@ -31,7 +30,7 @@ class Users(db.Model):
 
     def generate_token(self, user_id):
         """Generate token for authentication and return string"""
-
+        from run import app
         try:
             # set up payload with expiration date
             payload = {
@@ -49,7 +48,17 @@ class Users(db.Model):
 
     @staticmethod
     def decode_token(token):
-        pass
+        """Decodes token from the authorization header"""
+        from run import app
+        try:
+            # try to decode the token using the secret variable
+            payload = jwt.decode(token, app.config.get('SECRET_KEY'))
+            return payload['sub']
+        except jwt.ExpiredSignatureError:
+            # token has expired, return n error string
+            return "Expired token. Please login to get new token"
+        except jwt.InvalidTokenError:
+            return "Invalid token. Please register or login"
         
 
     def __repr__(self):
