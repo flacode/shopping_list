@@ -73,6 +73,28 @@ class ShoppingListTestCase(unittest.TestCase):
                                       headers={'Authorization': access_token})
         self.assertIn('shopping_lists', str(shopping_lists.data))
 
+    def test_view_all_shopping_lists_with_query(self):
+        """Test to view all shopping lists with a query string in url"""
+        self.app.post('/auth/register', data=json.dumps(self.user),
+                      headers={'Content-Type': 'application/json'})
+        res = self.login_user()
+        # obtain access token
+        access_token = json.loads(res.data.decode())['access_token']
+        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+                      headers={'Content-Type': 'application/json',
+                               'Authorization': access_token})
+        shopping_lists = self.app.get('/shoppinglists/',
+                                      headers={'Authorization': access_token})
+        self.assertIn('shopping_lists', str(shopping_lists.data))
+        shopping_list = self.app.get('/shoppinglists/?q=bakery',
+                                     headers={'Authorization': access_token})
+        self.assertIn('shopping_lists', str(shopping_list.data))
+        result = self.app.get('/shoppinglists/?q=abc',
+                              headers={'Authorization': access_token})
+        self.assertEqual(result.status_code, 200)
+        self.assertIn('Shopping list to match the search key not found.',
+                      str(result.data))
+
     def test_view_all_shopping_lists_unauthenticated_user(self):
         result = self.app.get('/shoppinglists/')
         self.assertEqual(result.status_code, 401)

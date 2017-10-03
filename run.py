@@ -1,7 +1,10 @@
 import json
-from flask import Flask, request, jsonify, make_response
-from models import Users, ShoppingLists, Items, db
-from werkzeug.security import generate_password_hash, check_password_hash
+
+from flask import Flask, jsonify, make_response, request
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from models import Items, ShoppingLists, Users, db
+
 app = Flask(__name__)
 POSTGRES = {
     'user': 'postgres',
@@ -96,7 +99,12 @@ def create_view_shopping_list():
                     return make_response(jsonify(response)), 400
             else:
                 # block for request.method == 'GET'
-                shopping_lists = ShoppingLists.query.filter_by(user_id=user_id)
+                print (request.url)
+                key = request.args.get('q', None)
+                if key:
+                    shopping_lists = ShoppingLists.query.filter(ShoppingLists.name.like("%"+key.strip()+"%")).filter_by(user_id=user_id).all()
+                else:
+                    shopping_lists = ShoppingLists.query.filter_by(user_id=user_id)
                 # create a list of dictionary shopping lists
                 output = []
                 for shopping_list in shopping_lists:
@@ -107,7 +115,11 @@ def create_view_shopping_list():
                     output.append(shopping_list_data)
                 # check if there are any shopping lists in the database
                 if output == []:
-                    return make_response(jsonify({'message': 'No shopping lists created yet.'})), 200
+                    if key:
+                        message = "Shopping list to match the search key not found."
+                    else:
+                        message = "No shopping lists created yet."
+                    return make_response(jsonify({'message': message})), 200
                 return make_response(jsonify({"shopping_lists": output})), 200
         else:
             # user is not legit, so the payload is an error message
