@@ -99,12 +99,14 @@ def create_view_shopping_list():
                     return make_response(jsonify(response)), 400
             else:
                 # block for request.method == 'GET'
-                print (request.url)
                 key = request.args.get('q', None)
+                limit = request.args.get('limit', 10, type=int)
+                page = request.args.get('page', 1, type=int)
+                # check for a search key
                 if key:
-                    shopping_lists = ShoppingLists.query.filter(ShoppingLists.name.like("%"+key.strip()+"%")).filter_by(user_id=user_id).all()
+                    shopping_lists = ShoppingLists.query.filter(ShoppingLists.name.like("%"+key.strip()+"%")).filter_by(user_id=user_id).order_by(ShoppingLists.due_date).paginate(page, limit, False).items
                 else:
-                    shopping_lists = ShoppingLists.query.filter_by(user_id=user_id)
+                    shopping_lists = ShoppingLists.query.filter_by(user_id=user_id).order_by(ShoppingLists.due_date).paginate(page, limit, False).items
                 # create a list of dictionary shopping lists
                 output = []
                 for shopping_list in shopping_lists:

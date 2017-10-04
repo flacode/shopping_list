@@ -14,6 +14,8 @@ class ShoppingListTestCase(unittest.TestCase):
         self.app = app.test_client()
         self.user = {"username": "flacode", "password": "flavia", "email": "fnshem@gmail.com"}
         self.shopping_list = {"name": "bakery", "due_date": "2017-08-17"}
+        self.shopping_list1 = {"name": "food", "due_date": "2017-08-18"}
+        self.shopping_list2 = {"name": "hardware", "due_date": "2017-08-19"}
         self.shopping_list_error = {"name": "food store"}
         with app.app_context():
             db.drop_all()
@@ -94,6 +96,32 @@ class ShoppingListTestCase(unittest.TestCase):
         self.assertEqual(result.status_code, 200)
         self.assertIn('Shopping list to match the search key not found.',
                       str(result.data))
+
+    def test_view_all_shopping_lists_with_limit(self):
+        """Test to view all shopping lists with a limit on the number of posts per page"""
+        self.app.post('/auth/register', data=json.dumps(self.user),
+                      headers={'Content-Type': 'application/json'})
+        res = self.login_user()
+        # obtain access token
+        access_token = json.loads(res.data.decode())['access_token']
+        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+                      headers={'Content-Type': 'application/json',
+                               'Authorization': access_token})
+        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list1),
+                      headers={'Content-Type': 'application/json',
+                               'Authorization': access_token})
+        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list2),
+                      headers={'Content-Type': 'application/json',
+                               'Authorization': access_token})
+        shopping_lists = self.app.get('/shoppinglists/',
+                                      headers={'Authorization': access_token})
+        self.assertIn('shopping_lists', str(shopping_lists.data))
+        self.assertIn('hardware', str(shopping_lists.data))
+        shopping_list = self.app.get('/shoppinglists/?limit=2&page=1',
+                                     headers={'Authorization': access_token})
+        self.assertIn('bakery', str(shopping_list.data))
+        self.assertIn('food', str(shopping_list.data))
+        self.assertNotIn('hardware', str(shopping_list.data))
 
     def test_view_all_shopping_lists_unauthenticated_user(self):
         result = self.app.get('/shoppinglists/')
