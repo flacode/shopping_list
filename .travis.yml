@@ -11,7 +11,7 @@ services:
 before_script:
   - psql -c 'create database shopping_list_tdb1;' -U postgres
 # command to run tests
-script: 
-  - python -m pytest tests
+script:
+  - python -m pytest --cov tests
 after_success:
   - coveralls
