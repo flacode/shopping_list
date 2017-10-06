@@ -1,0 +1,290 @@
+FORMAT: 1A
+HOST: http://localhost:5000/
+
+# ShoppingList
+
+ShoppingList is a simple API that allows users to record, share and keep track of their shopping lists.
+
+# Group Users
+API enables users to create accounts and login into the application.
+A user object has the following attributes.
+- id `(Number)` : unique identifier. 
+- username `(String)` : unique username.
+- email `(String)` : unique email for user.
+- password `(String)` : password for your account.
+
+
+## Create Account [POST /auth/register]
+
++ Request (application/json)
+
+        {
+            "username": "username",
+            "email": "email@email.com",
+            "password": "password"
+        }
+
+
++ Response 201 (application/json)
+
+    + Body
+    
+            {
+                    "message": "You registered successfully. Please log in."
+            }
+            
+
+##  User login [POST /auth/login]
+The user can login using their username and password. After login, the user gets an access token that they will use to access the private resources
+Returns a `access_token` which is passed along as a header with all future requests to authenticate the user.
+You must provide the `Authorization: {access_token}` header in all other requests.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Basic b2RkeTpmbGF2aWE=
+
+    + Body
+    
+            {
+                "username": "username",
+                "password": "password"
+            }
+            
++ Response 200 (application/json)
+
+        {
+            "access_token": "access_token",
+            "message":"User logged in sucessfully."
+        }
+
+            
+## Reset password [POST /auth/reset-password]
+User can reset the password to their account by providing a valid username and new password.
+
++ Request (application/json)
+
+        {
+            "username": "username",
+            "password": "new_password"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "message": "You have successfully changed your password."
+        }
+
+
+# Group Shopping Lists 
+
+API enables authenticated users to create, update, view and delete a shopping list
+A ShoppingList object has the following attributes.
+- id `(Number)` : unique identifier. 
+- name `(String)` : Name for shopping list.
+- user_id `(Number)` : Unique identifier for the user who created the shopping list.
+- due_date `(DateTime)` : Date by which the items on the shopping list should be bought.
+
+## Create shopping list [POST /shoppinglists/]
+The user can create a new shopping list only after including the `access_token` in the header for the request.
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+
+    + Body
+    
+            {
+                "name": "Shopping list_name",
+                "due_date": "yyyy-mm-dd"
+            }
+            
++ Response 201 (application/json)
+
+        {
+            "message": "Shopping list created."
+        }
+    
+## Shopping lists Collection [/shoppinglists/{id}/{?q,limit,page}]
+
+### View shopping lists [GET]
+
+A user can view all the shopping lists they have created arranged by the "due_date".
+User can use different urls to shopping lists.
+- `/shoppinglists/`: View all shopping lists created by the user.
+- `/shoppinglists/?q=search_key`: View all shopping lists created by the user that contain the `search_key`.
+- `/shoppinglists/?limit=5&page=1`: Limit the number of shopping lists displayed on each page.
+- `/shoppinglists/1`: View shopping list with id `1`.
+
++ Parameters
+    + id: 1 (Number, optional) - ID for requested shopping list.
+    + q: search_key (String, optional) - Search key to be used in query.
+    + limit: 5 (Number, optional) - Number of shopping lists per page.
+    + page: 1 (Number, optional) - Select page to view after limiting the number of shopping lists per page.
+    
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+
++ Response 200 (application/json)
+
+        [
+            {
+                "shopping_lists": [
+                    {
+                        "due_date": "Day, dd Mon YYYY",
+                        "id": "shopping_list_id",
+                        "name": "shopping_list_name"
+                    }
+                ]
+            }
+        ]
+
+
+### Update Shopping list [PUT]
+User can update shopping list whose unique identifier is `id`.
+
++ Parameters
+    + id: 1 (Number, required) - ID for shopping list to be updated.
+    
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+            
+    + Body 
+    
+            {
+                "name": "new_name",
+                "due_date": "new_due_date"
+            }
+
++ Response 200 (application/json)
+
+        {
+            "message": "Shopping list has been updated."
+        }
+
+### Delete Shopping list [DELETE]
+User can delete shopping list whose unique identifier is `id`.
+
++ Parameters
+    + id: 1 (Number, required) - ID for shopping list to be deleted.
+    
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+            
++ Response 200 (application/json)
+
+        {
+            "message": "Shopping list successfully deleted"
+        }
+
+# Group Items
+The user can add, update and delete items in a shopping list. The Item object has the following attributes.
+- id `(Number)` : unique identifier. 
+- name `(String)` : name of item to be added to shopping list.
+- quantity `(Number)` : Number of items needed.
+- bought_from `(String)` : Location where the item can be obtained.
+- status `(Boolean)` : Has the item been bought yet or not.
+
+# Items Collection [/shoppinglists/{id}/items/]
+
++ Parameters
+    + id: 1 (Number, required) - ID for shopping list where the item is to be added.
+
+### Add Items [POST]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+
+    + Body
+    
+            {
+                "name": "item_name",
+                "quantity": 5, 
+                "bought_from": "supermarket",
+                "status": "false"
+            }
+            
++ Response 201 (application/json)
+
+        {
+            "message": "Item added to shopping list"
+        }
+
+### View Items [GET]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+            
++ Response 201 (application/json)
+
+        {
+            "name": "item_name",
+            "quantity": 5, 
+            "bought_from": "supermarket",
+            "status": "false"
+        }
+
+        
+## Item [/shoppinglists/{id}/items/{item_id}]
+
++ Parameters
+    + id: 1 (Number, required) - ID for shopping list where the item is to be added.
+    + item_id (Number, required) - ID for item to be updated or deleted.
+
+### Update item [PUT]
+
+User can update the item's quantity or change the status to `True` for purchased.
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+
+    + Body
+    
+            {
+                "name": "item_name",
+                "quantity": 1, 
+                "bought_from": "supermarket",
+                "status": "True"
+            }
+            
++ Response 200 (application/json)
+
+        {
+            "message": "Item updated"
+        }
+        
+### Delete item [DELETE]
+
+User can delete item with unique identifier `item_id` from shopping list `id`. 
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: {access_token}
+
++ Response 200 (application/json)
+
+        {
+            "message": "Item successfully deleted from shopping list"
+        }
