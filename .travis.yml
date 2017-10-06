@@ -13,3 +13,5 @@ before_script:
 # command to run tests
 script: 
   - python -m pytest tests
+after_success:
+  - coveralls

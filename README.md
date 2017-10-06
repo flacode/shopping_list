@@ -1,5 +1,7 @@
 # ShoppingList API
 
+[![Build Status](https://travis-ci.org/flacode/shopping_list.png)](https://travis-ci.org/flacode/shopping_list)
+
 > ShoppingList is a simple API that allows users to record, share and keep track of their shopping lists.
 
 ## Getting Started
@@ -13,5 +15,5 @@ From the project's repository, ``` python run.py ``` command will start the serv
 
 ## Running the tests
 
-From the project's repository, use ``` python -m tests\ ``` command to run the tests.
+From the project's repository, use ``` python -m tests/ ``` command to run the tests.
 
