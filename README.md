@@ -1,6 +1,7 @@
 # ShoppingList API
 
-[![Build Status](https://travis-ci.org/flacode/shopping_list.png)](https://travis-ci.org/flacode/shopping_list)
+[![Build Status](https://travis-ci.org/flacode/shopping_list.png)](https://travis-ci.org/flacode/shopping_list)     [![Coverage Status](https://coveralls.io/repos/github/flacode/shopping_list/badge.svg)](https://coveralls.io/github/flacode/shopping_list)
+
 
 > ShoppingList is a simple API that allows users to record, share and keep track of their shopping lists.
 
