@@ -4,6 +4,12 @@ python:
 # command to install dependencies
 install:
   - pip install -r requirements.txt
+# start postgres database
+services:
+  - postgresql
+# create database for the application
+before_script:
+  - psql -c 'create database shopping_list_tdb1;' -U postgres
 # command to run tests
 script: 
   - python -m pytest tests
