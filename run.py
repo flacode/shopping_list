@@ -1,5 +1,5 @@
 import json
-
+import os
 from flask import Flask, jsonify, make_response, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -13,10 +13,14 @@ POSTGRES = {
     'host': 'localhost',
     'port': '5432',
 }
+
 # set debug to true for development purposes
 app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:\
-%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+if os.environ.get('DATABASE_URL'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 app.config['SECRET_KEY'] = 'this-really-needs-to-be-changed'
 db.init_app(app)  # connect sqlalchmey to app
 
