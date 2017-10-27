@@ -18,3 +18,7 @@ From the project's repository, ``` python run.py ``` command will start the serv
 
 From the project's repository, use ``` python -m tests/ ``` command to run the tests.
 
+## To test with Postman
+
+URL: https://deployment-shopping-list-api.herokuapp.com/
+
