@@ -27,19 +27,26 @@ Tools used for development of this API are;
 
 ## Running the tests
 
-From the project's repository, use ```sh python -m tests/ ``` command to run the tests.
+From the project's repository, to run tests, use
+```sh
+   python -m pytest tests/ 
+ ``` 
 
 ## Getting Started
 ### Prerequisites
-1. Install requirements, run ```sh pip install -r requirements.txt```.
+1. Install requirements, run 
+```sh
+     pip install -r requirements.txt
+```
 2. Create a postgres database and edit the database configurations as desired.
 
-From the project's repository, ```sh 
+From the project's repository, 
+```sh 
     $ python manage.py db init
     $ python manage.py db migrate
     $ python manage.py db upgrade
     $ python run.py runserver
-    ```
+ ```
 ### Base URL for the API
 URL: https://deployment-shopping-list-api.herokuapp.com/
 
