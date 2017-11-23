@@ -1,13 +1,7 @@
 {
-  "test_run.py": true,
-  "test_run.py::UsersTestCase::test_user_account_creation": true,
-  "tests/test_app.py": true,
-  "tests/test_run.py::ItemsTestCase::test_add_item_to_shopping_list": true,
-  "tests/test_run.py::ItemsTestCase::test_delete_item_from_shopping_list": true,
-  "tests/test_run.py::ItemsTestCase::test_update_item_in_shopping_list": true,
-  "tests/test_run.py::ItemsTestCase::test_view_items_in_shopping_list": true,
-  "tests/test_run.py::UsersTestCase": true,
-  "tests/test_run.py::UsersTestCase::test_empty_db": true,
-  "tests/test_shoppinglist.py::ShoppingListTestCase::test_create_chopping_list_with_missing_attributes": true,
-  "tests/test_shoppinglist.py::ShoppingListTestCase::test_create_shopping_list_for_unregistered_user": true
+  "app/tests/test_items.py::ItemsTestCase": true,
+  "app/tests/test_shoppinglist.py::ShoppingListTestCase": true,
+  "tests/test_items.py": true,
+  "tests/test_shoppinglist.py": true,
+  "tests/test_user.py": true
 }

@@ -3,14 +3,15 @@ import json
 import unittest
 import tempfile
 from base64 import b64encode
-from run import app, db
+from app import app
+from app.models import db
 
 
 class UsersTestCase(unittest.TestCase):
     """Testcases for the Users class"""
     def setUp(self):
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-        app.testing = True
+        app.config['TESTING'] = True
         self.app = app.test_client()
         self.user = {"username": "flacode", "password": "flavia", "email": "fnshem@gmail.com"}
         with app.app_context():

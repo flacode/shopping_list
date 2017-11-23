@@ -3,7 +3,7 @@ import json
 import unittest
 import tempfile
 from base64 import b64encode
-from run import app, db
+from app import app, db
 
 
 class ShoppingListTestCase(unittest.TestCase):
