@@ -3,7 +3,7 @@ import json
 import unittest
 import tempfile
 from base64 import b64encode
-from app import app, db
+from app import app, db, url_prefix
 
 
 class ShoppingListTestCase(unittest.TestCase):
@@ -26,24 +26,24 @@ class ShoppingListTestCase(unittest.TestCase):
         os.unlink(app.config['DATABASE'])
 
     def login_user(self):
-        user_pass = b64encode(b"flacode:flavia").decode("ascii")
-        headers = {'Authorization': 'Basic %s' % user_pass}
-        return self.app.post('/auth/login', headers=headers)
+        return self.app.post(url_prefix+'/auth/login',
+                             data=json.dumps({"username": "flacode", "password": "flavia"}),
+                             headers={'Content-Type': 'application/json'})
 
     def test_create_shopping_list_for_authenticated_user(self):
         """Test create shopping list for user"""
-        self.app.post('/auth/register', data=json.dumps(self.user),
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         res = self.login_user()
         # obtain access token
         access_token = json.loads(res.data.decode())['access_token']
-        result = self.app.post('/shoppinglists/',
+        result = self.app.post(url_prefix+'/shoppinglists/',
                                data=json.dumps(self.shopping_list),
                                headers={'Content-Type': 'application/json',
                                         'Authorization': access_token})
         self.assertEqual(result.status_code, 201)
         self.assertIn('Shopping list created.', str(result.data))
-        res_error = self.app.post('/shoppinglists/',
+        res_error = self.app.post(url_prefix+'/shoppinglists/',
                                   data=json.dumps(self.shopping_list_error),
                                   headers={'Content-Type': 'application/json',
                                            'Authorization': access_token})
@@ -51,47 +51,56 @@ class ShoppingListTestCase(unittest.TestCase):
         self.assertIn('Missing attributes, shopping list not created.', str(res_error.data))
 
     def test_create_shopping_list_for_unauthenticated_user(self):
-        """Test create shopping list for unregisterd user"""
-        result = self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+        """Test create shopping list for unregistered user"""
+        result = self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list),
                                headers={'Content-Type': 'application/json'})
         self.assertEqual(result.status_code, 401)
-        self.assertIn('Please register  or login.', str(result.data))
+        self.assertIn('Please register or login.', str(result.data))
+        res = self.app.post(url_prefix+'/shoppinglists/',
+                            data=json.dumps(self.shopping_list),
+                            headers={'Content-Type': 'application/json',
+                                    'Authorization': 'adnckddee'})
+        self.assertEqual(res.status_code, 401)
+        self.assertIn('Invalid token. Please register or login', str(res.data))
 
     def test_view_all_shopping_lists(self):
         """Test to view all shopping lists"""
-        self.app.post('/auth/register', data=json.dumps(self.user),
+        no_token = self.app.get(url_prefix+'/shoppinglists/')
+        self.assertEqual(no_token.status_code, 401)
+        self.assertIn('Please register or login.', str(no_token.data))
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         res = self.login_user()
         # obtain access token
         access_token = json.loads(res.data.decode())['access_token']
-        result = self.app.get('/shoppinglists/',
+        result = self.app.get(url_prefix+'/shoppinglists/',
                               headers={'Authorization': access_token})
         self.assertEqual(result.status_code, 200)
         self.assertIn('No shopping lists created yet.', str(result.data))
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list),
                       headers={'Content-Type': 'application/json',
                                'Authorization': access_token})
-        shopping_lists = self.app.get('/shoppinglists/',
+        shopping_lists = self.app.get(url_prefix+'/shoppinglists/',
                                       headers={'Authorization': access_token})
         self.assertIn('shopping_lists', str(shopping_lists.data))
 
     def test_view_all_shopping_lists_with_query(self):
         """Test to view all shopping lists with a query string in url"""
-        self.app.post('/auth/register', data=json.dumps(self.user),
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         res = self.login_user()
         # obtain access token
         access_token = json.loads(res.data.decode())['access_token']
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list),
                       headers={'Content-Type': 'application/json',
                                'Authorization': access_token})
-        shopping_lists = self.app.get('/shoppinglists/',
+        shopping_lists = self.app.get(url_prefix+'/shoppinglists/',
                                       headers={'Authorization': access_token})
         self.assertIn('shopping_lists', str(shopping_lists.data))
-        shopping_list = self.app.get('/shoppinglists/?q=bakery',
+        shopping_list = self.app.get(url_prefix+'/shoppinglists/?q=bakery',
                                      headers={'Authorization': access_token})
         self.assertIn('shopping_lists', str(shopping_list.data))
-        result = self.app.get('/shoppinglists/?q=abc',
+        result = self.app.get(url_prefix+'/shoppinglists/?q=abc',
                               headers={'Authorization': access_token})
         self.assertEqual(result.status_code, 200)
         self.assertIn('Shopping list to match the search key not found.',
@@ -99,83 +108,105 @@ class ShoppingListTestCase(unittest.TestCase):
 
     def test_view_all_shopping_lists_with_limit(self):
         """Test to view all shopping lists with a limit on the number of posts per page"""
-        self.app.post('/auth/register', data=json.dumps(self.user),
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         res = self.login_user()
         # obtain access token
         access_token = json.loads(res.data.decode())['access_token']
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list),
                       headers={'Content-Type': 'application/json',
                                'Authorization': access_token})
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list1),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list1),
                       headers={'Content-Type': 'application/json',
                                'Authorization': access_token})
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list2),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list2),
                       headers={'Content-Type': 'application/json',
                                'Authorization': access_token})
-        shopping_lists = self.app.get('/shoppinglists/',
+        shopping_lists = self.app.get(url_prefix+'/shoppinglists/',
                                       headers={'Authorization': access_token})
         self.assertIn('shopping_lists', str(shopping_lists.data))
         self.assertIn('hardware', str(shopping_lists.data))
-        shopping_list = self.app.get('/shoppinglists/?limit=2&page=1',
+        shopping_list = self.app.get(url_prefix+'/shoppinglists/?limit=2&page=1',
                                      headers={'Authorization': access_token})
         self.assertIn('bakery', str(shopping_list.data))
         self.assertIn('food', str(shopping_list.data))
         self.assertNotIn('hardware', str(shopping_list.data))
 
     def test_view_all_shopping_lists_unauthenticated_user(self):
-        result = self.app.get('/shoppinglists/')
+        result = self.app.get(url_prefix+'/shoppinglists/')
         self.assertEqual(result.status_code, 401)
-        self.assertIn('Please register  or login.', str(result.data))
+        self.assertIn('Please register or login.', str(result.data))
               
     def test_view_one_shopping_list(self):
         """Test if user can view saved shopping list"""
-        self.app.post('/auth/register', data=json.dumps(self.user),
+        no_token = self.app.get(url_prefix+'/shoppinglists/1')
+        self.assertEqual(no_token.status_code, 401)
+        self.assertIn('Please register or login.', str(no_token.data))
+        forged_token = self.app.get(url_prefix+'/shoppinglists/1', headers={'Authorization': 'abcdefgh'})
+        self.assertEqual(forged_token.status_code, 401)
+        self.assertIn('Invalid token. Please register or login', str(forged_token.data))
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         res = self.login_user()
         # obtain access token
         access_token = json.loads(res.data.decode())['access_token']
         # if shopping list is not saved in the database
-        result = self.app.get('/shoppinglists/1', headers={'Authorization': access_token})
+        result = self.app.get(url_prefix+'/shoppinglists/1', headers={'Authorization': access_token})
         self.assertEqual(result.status_code, 404)
         self.assertIn('Shopping list can not be found', str(result.data))
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list),
                       headers={'Content-Type': 'application/json', 'Authorization': access_token})
-        shopping_list = self.app.get('/shoppinglists/1', headers={'Authorization': access_token})
+        shopping_list = self.app.get(url_prefix+'/shoppinglists/1', headers={'Authorization': access_token})
         self.assertEqual(shopping_list.status_code, 200)
         self.assertIn('shopping list', str(shopping_list.data))
 
     def test_update_shopping_list(self):
         """Test if user can update shopping list details"""
-        self.app.post('/auth/register', data=json.dumps(self.user),
+        no_token = self.app.put(url_prefix+'/shoppinglists/1', data=json.dumps({"name": "new_name"}),
+                                headers={'Content-Type': 'application/json'})
+        self.assertEqual(no_token.status_code, 401)
+        self.assertIn('Please register or login.', str(no_token.data))
+        forged_token = self.app.put(url_prefix+'/shoppinglists/1', data=json.dumps({"name": "new_name"}),
+                                    headers={'Content-Type': 'application/json', 'Authorization': 'acsksskks'})
+        self.assertEqual(forged_token.status_code, 401)
+        self.assertIn('Invalid token. Please register or login', str(forged_token.data))
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         res = self.login_user()
         # obtain access token
         access_token = json.loads(res.data.decode())['access_token']
         # if shopping list is not saved in the database
-        result = self.app.put('/shoppinglists/1', data=json.dumps({"name": "new_name"}),
+        result = self.app.put(url_prefix+'/shoppinglists/1', data=json.dumps({"name": "new_name"}),
                               headers={'Content-Type': 'application/json', 'Authorization': access_token})
         self.assertEqual(result.status_code, 404)
         self.assertIn('Shopping list can not be found', str(result.data))
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list),
                       headers={'Content-Type': 'application/json', 'Authorization': access_token})
-        update_shopping_list = self.app.put('/shoppinglists/1', data=json.dumps({"name": "new_name"}),
+        update_shopping_list = self.app.put(url_prefix+'/shoppinglists/1', data=json.dumps({"name": "new_name", "due_date": "2017-09-18"}),
                                             headers={'Content-Type': 'application/json', 'Authorization': access_token})
         self.assertEqual(update_shopping_list.status_code, 200)
         self.assertIn('Shopping list has been updated', str(update_shopping_list.data))
 
     def test_delete_shopping_list(self):
         """Test to delete shopping list from the database"""
-        self.app.post('/auth/register', data=json.dumps(self.user),
+        no_token = self.app.delete(url_prefix+'/shoppinglists/1', data=json.dumps({"name": "new_name"}),
+                                   headers={'Content-Type': 'application/json'})
+        self.assertEqual(no_token.status_code, 401)
+        self.assertIn('Please register or login.', str(no_token.data))
+        forged_token = self.app.delete(url_prefix+'/shoppinglists/1', data=json.dumps({"name": "new_name"}),
+                                       headers={'Content-Type': 'application/json', 'Authorization': 'acsksskks'})
+        self.assertEqual(forged_token.status_code, 401)
+        self.assertIn('Invalid token. Please register or login', str(forged_token.data))
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         res = self.login_user()
         # obtain access token
         access_token = json.loads(res.data.decode())['access_token']
-        result = self.app.delete('/shoppinglists/1', headers={'Authorization': access_token})
+        result = self.app.delete(url_prefix+'/shoppinglists/1', headers={'Authorization': access_token})
         self.assertEqual(result.status_code, 404)
         self.assertIn('Shopping list can not be found', str(result.data))
-        self.app.post('/shoppinglists/', data=json.dumps(self.shopping_list),
+        self.app.post(url_prefix+'/shoppinglists/', data=json.dumps(self.shopping_list),
                       headers={'Content-Type': 'application/json', 'Authorization': access_token})
-        deleted = self.app.delete('/shoppinglists/1', headers={'Authorization': access_token})
+        deleted = self.app.delete(url_prefix+'/shoppinglists/1', headers={'Authorization': access_token})
         self.assertEqual(deleted.status_code, 200)
         self.assertIn('Shopping list successfully deleted', str(deleted.data))

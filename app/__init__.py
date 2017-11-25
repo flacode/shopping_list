@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+url_prefix = '/api'
 POSTGRES = {
     'user': 'flavia',
     'pw': '',
@@ -22,3 +23,5 @@ app.config['SECRET_KEY'] = 'this-really-needs-to-be-changed'
 db = SQLAlchemy(app)
 
 from app import views, models # at the end to avoid circular imports
+
+app.register_blueprint(views.api)

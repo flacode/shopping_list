@@ -1,37 +1,54 @@
 import json
-from flask import jsonify, make_response, request
+from flask import Blueprint, jsonify, make_response, request
 from werkzeug.security import check_password_hash, generate_password_hash
-from app.models import Items, ShoppingLists, Users
-from app import app
+from app.models import Items, ShoppingLists, Users, BlacklistTokens
 
-@app.route('/auth/register', methods=['POST'])
+api = Blueprint('api', __name__, url_prefix='/api')
+
+@api.route('/auth/register', methods=['POST'])
 def create_account():
     """API endpoint to create new user"""
     data = request.get_json()
+    data_username = data.get('username', None)
+    data_email = data.get('email', None)
+    data_password = data.get('password', None)
+    if not data_username or not data_email or not data_password:
+        response = {'message': 'Missing required fields for user'}
+        return make_response(jsonify(response)), 401
     # check if the username is unique
-    user = Users.query.filter_by(username=data['username']).first()
+    user = Users.query.filter_by(username=data_username).first()
     if not user:
-        new_user = Users(username=data['username'], email=data['email'], password=data['password'])
+        new_user = Users(username=data_username, email=data_email, password=data_password)
         new_user.save()
         response = {'message': 'You registered successfully. Please log in.'}
         # return a response notifying the user that they registered successfully
         return make_response(jsonify(response)), 201
     return make_response(jsonify({'message': 'User acccount already exists.'})), 202
 
-
-@app.route('/auth/login', methods=['POST'])
+@api.route('/auth/login', methods=['POST'])
 def login_user():
     """API endpoint to login existing user"""
-    auth = request.authorization
-    # check if auth contains the username and password reqired for login
-    if not auth or not auth.username or not auth.password:
-        return make_response('Could not verify user', 401, {'WWW-Authenticate': 'Basic realm ="Login required!"'})
-    # check if username is for a registered user
-    user = Users.query.filter_by(username=auth.username).first()
+    data = request.get_json()
+    data_username = data.get('username', None)
+    data_email = data.get('email', None)
+    data_password = data.get('password', None)
+    # check if supplied data contains all the fields required for login
+    if (not data_username and not data_email) or not data_password:
+        response = {
+            'message': 'Fields required for login not supplied'
+        }
+        return make_response(jsonify(response)), 401
+    if data_email:
+        user = Users.query.filter_by(email=data_email).first()
+    else:
+        user = Users.query.filter_by(username=data_username).first()
     if not user:
-        return make_response('User does not exist', 401, {'WWW-Authenticate': 'Basic realm ="Login required!"'})
+        response = {
+            'message': 'User account does not exist'
+        }
+        return make_response(jsonify(response)), 401
     # compare the hashed password entered in the password and that in stored the database
-    if check_password_hash(user.password, auth.password):
+    if check_password_hash(user.password, data_password):
         # generate access token for authenticated user
         access_token = user.generate_token(user.id)
         if access_token:
@@ -40,27 +57,96 @@ def login_user():
                 'access_token': access_token.decode()
                 }
             return make_response(jsonify(response)), 200
-    return make_response('Invalid user credentials', 401, {'WWW-Authenticate': 'Basic realm ="Login required!"'})
+    response = {
+        'message': 'Invalid user credentials'
+    }
+    return make_response(jsonify(response)), 401
 
 
-@app.route('/auth/reset-password', methods=['POST'])
+@api.route('/auth/reset-password', methods=['POST'])
 def reset_password():
-    """API endpoint to change a user's password given a username"""
+    """API endpoint to change a user's password given a username or email"""
     data = request.get_json()
     # check if username exists in the database
-    username = data['username']
-    user = Users.query.filter_by(username=username).first()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    if (not username and not email) or not password:
+        response = {
+            'message': 'Fields required for reset password not supplied'
+        }
+        return make_response(jsonify(response)), 401
+    if username:
+        user = Users.query.filter_by(username=username).first()
+    else:
+        user = Users.query.filter_by(email=email).first()
     if not user:
         return make_response(jsonify({'message': 'No user information found'})), 404
-    # hash the password befpre saving it
-    user.password = generate_password_hash(data['password'])
+    # hash the password before saving it
+    user.password = generate_password_hash(password)
     user.save()
     response = {'message': 'You have successfully changed your password.'}
     # return a response notifying the user that they reset their password successfully
     return make_response(jsonify(response)), 200
 
+@api.route('/auth/logout', methods=['POST'])
+def logout_user():
+    """API endpoint to logout user"""
+    access_token = request.headers.get('Authorization')
+    if access_token:
+        # attempt to decode the token and get the User ID
+        user_id = Users.decode_token(access_token)
+        if not isinstance(user_id, str):
+            blacklist_token = BlacklistTokens(token=access_token)
+            blacklist_token.save()
+            response = {
+                'message': 'Successfully logged out'
+            }
+            return make_response(jsonify(response)), 200
+        else:
+            # user is not legit, so the payload is an error message
+            message = user_id
+            response = {'message': message}
+            return make_response(jsonify(response)), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
-@app.route('/shoppinglists/', methods=['POST', 'GET'])
+@api.route('/auth/users', methods=['GET'])
+def view_users():
+    users = Users.query.all()
+    output = []
+    for user in users:
+        user_data = {}
+        user_data['id'] = user.id
+        user_data['username'] = user.username
+        user_data['email'] = user.email
+        output.append(user_data)
+    if output == []:
+        return make_response(jsonify({'message':'No users registered yet'})), 200
+    return make_response(jsonify({"Users": output})), 200
+
+@api.route('/auth/user/<user_id>', methods=['GET'])
+def view_one_user(user_id):
+    """View user account details given user id"""
+    user = Users.query.filter_by(id=user_id).first()
+    if not user:
+        return make_response(jsonify({'message': 'User account not found'})), 404
+    user_data = {}
+    user_data['id'] = user.id
+    user_data['username'] = user.username
+    user_data['email'] = user.email
+    return make_response(jsonify({'user': user_data})), 200
+
+@api.route('/auth/user/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    """Delete user account given user id"""
+    user = Users.query.filter_by(id=user_id).first()
+    if not user:
+        return make_response(jsonify({'message': 'User account not found'})), 404
+    user.delete()
+    return make_response(jsonify({'message':'User account successfully deleted'})), 200
+
+
+@api.route('/shoppinglists/', methods=['POST', 'GET'])
 def create_view_shopping_list():
     """Method to create or view shopping lists"""
     # get the access token from header
@@ -111,9 +197,9 @@ def create_view_shopping_list():
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
-@app.route('/shoppinglists/<id>', methods=['GET'])
+@api.route('/shoppinglists/<id>', methods=['GET'])
 def view_one_shopping_list(id):
     """Get shopping list details by id"""
     # get the access token from header
@@ -137,9 +223,9 @@ def view_one_shopping_list(id):
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
-@app.route('/shoppinglists/<id>', methods=['PUT'])
+@api.route('/shoppinglists/<id>', methods=['PUT'])
 def update_shopping_list(id):
     """Method for user to update shopping_list"""
     # get the access token from header
@@ -166,9 +252,9 @@ def update_shopping_list(id):
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
-@app.route('/shoppinglists/<id>', methods=['DELETE'])
+@api.route('/shoppinglists/<id>', methods=['DELETE'])
 def delete_shopping_list(id):
     """Method to delete a shopping list"""
     # get the access token from header
@@ -188,10 +274,10 @@ def delete_shopping_list(id):
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
 
-@app.route('/shoppinglists/<id>/items/', methods=['POST'])
+@api.route('/shoppinglists/<id>/items/', methods=['POST'])
 def add_item_to_shopping_list(id):
     # get the access token from header
     access_token = request.headers.get('Authorization')
@@ -214,10 +300,10 @@ def add_item_to_shopping_list(id):
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
 
-@app.route('/shoppinglists/<id>/items/<item_id>', methods=['PUT'])
+@api.route('/shoppinglists/<id>/items/<item_id>', methods=['PUT'])
 def update_item_in_shopping_list(id, item_id):
     # get the access token from header
     access_token = request.headers.get('Authorization')
@@ -254,10 +340,10 @@ def update_item_in_shopping_list(id, item_id):
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
 
-@app.route('/shoppinglists/<id>/items/', methods=['GET'])
+@api.route('/shoppinglists/<id>/items/', methods=['GET'])
 def view_items_in_shopping_list(id):
     """Method to view items in shopping list"""
     # get the access token from header
@@ -289,10 +375,10 @@ def view_items_in_shopping_list(id):
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
 
 
-@app.route('/shoppinglists/<id>/items/<item_id>', methods=['DELETE'])
+@api.route('/shoppinglists/<id>/items/<item_id>', methods=['DELETE'])
 def delete_item_from_shopping_list(id, item_id):
     """Method to delete items from shopping list"""
     # get the access token from header
@@ -315,4 +401,4 @@ def delete_item_from_shopping_list(id, item_id):
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register  or login.'})), 401
+    return make_response(jsonify({'message': 'Please register or login.'})), 401
