@@ -7,7 +7,7 @@ url_prefix = '/api'
 POSTGRES = {
     'user': 'postgres',
     'pw': '',
-    'db': 'shoppingListDb',
+    'db': 'shoppinglistdb',
     'host': 'localhost',
     'port': '5432',
 }
