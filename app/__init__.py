@@ -5,9 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 url_prefix = '/api'
 POSTGRES = {
-    'user': 'flavia',
+    'user': 'postgres',
     'pw': '',
-    'db': 'shopping_list_db',
+    'db': 'shoppingListDb',
     'host': 'localhost',
     'port': '5432',
 }
