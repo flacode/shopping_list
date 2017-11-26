@@ -63,7 +63,7 @@ From the project's repository, to run tests, use
     $ python run.py runserver
  ```
 ### Base URL for the API
-URL: https://deployment-shopping-list-api.herokuapp.com/api/
+URL: https://deployment-shopping-list-api.herokuapp.com/api
 
 ## End points
 ### Endpoints to create a user account and login into the application
@@ -73,23 +73,25 @@ POST | /auth/register | True | Create an account
 POST | /auth/login | True | Login a user
 POST | /auth/logout | False | Logout a user
 POST | /auth/reset-password | False | Reset a user password
-GET | /user | False | Returns details of a logged in user
-PUT | /user | False | Updates details of a logged in user
+GET | /auth/users | True | View all registered user accounts
+GET | /auth/user/<user_id> | True | View details of a registered account
+DELETE | /auth/user/<user_id> | True | Delete user account
+
 ### Endpoints to create, update, view and delete a shopping list
 HTTP Method|End point | Public Access|Action
 -----------|----------|--------------|------
-POST | /shoppinglists | False | Create a shopping list
-GET | /shoppinglists | False | View all shopping lists
-GET | /shoppinglists/id | False | View details of a shopping list
-PUT | /shoppinglists/id | False | Updates a shopping list with a given id
-DELETE | /shoppinglists/id | False | Deletes a shopping list with a given id
+POST | /shoppinglists/ | False | Create a shopping list
+GET | /shoppinglists/ | False | View all shopping lists
+GET | /shoppinglists/<id> | False | View details of a shopping list
+PUT | /shoppinglists/<id> | False | Updates a shopping list with a given id
+DELETE | /shoppinglists/<id> | False | Deletes a shopping list with a given id
+
 ### Endpoints to create, update, view and delete a shopping list item
 HTTP Method|End point | Public Access|Action
 -----------|----------|--------------|------
-GET | /shoppinglists/id/items | False | View Items of a given list id
-GET | /shoppinglists/id/items/<item_id> | False | View details of a particular item on a given list id
-POST | /shoppinglists/id/items | False | Add an Item to a shopping list
-PUT | /shoppinglists/id/items/<item_id> | False | Update a shopping list item on a given list
-DELETE | /shoppinglists/id/items/<item_id> | False | Delete a shopping list item from a given list
+POST | /shoppinglists/<id>/items/ | False | Add an Item to a shopping list
+PUT | /shoppinglists/<id>/items/<item_id> | False | Update a shopping list item on a given list
+GET | /shoppinglists/<id>/items/ | False | View items in a particular shopping list
+DELETE | /shoppinglists/<id>/items/<item_id> | False | Delete an item from a given shopping list
 
 
