@@ -38,9 +38,24 @@ From the project's repository, to run tests, use
 ```sh
      pip install -r requirements.txt
 ```
-2. Create a postgres database and edit the database configurations as desired.
-
-From the project's repository, 
+2. Database configuration.
+   - Download and install postgres from [here](https://www.postgresql.org/download/)
+   - Create database in terminal
+   ```sh
+      psql postgres;
+      CREATE DATABASE database_name;
+   ```
+   - Connect the application to the database by changing the ``` POSTGRES ``` variable in shopping_list/app/__init__.py.
+   ```
+      POSTGRES = {
+            'user': 'database user',
+            'pw': 'user password',
+            'db': 'database name',
+            'host': 'localhost',
+            'port': '5432',
+            }
+   ```
+3. To create database tables, from the project's repository run 
 ```sh 
     $ python manage.py db init
     $ python manage.py db migrate
@@ -48,7 +63,7 @@ From the project's repository,
     $ python run.py runserver
  ```
 ### Base URL for the API
-URL: https://deployment-shopping-list-api.herokuapp.com/
+URL: https://deployment-shopping-list-api.herokuapp.com/api/
 
 ## End points
 ### Endpoints to create a user account and login into the application
