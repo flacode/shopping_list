@@ -82,16 +82,16 @@ HTTP Method|End point | Public Access|Action
 -----------|----------|--------------|------
 POST | /shoppinglists/ | False | Create a shopping list
 GET | /shoppinglists/ | False | View all shopping lists
-GET | /shoppinglists/<id> | False | View details of a shopping list
-PUT | /shoppinglists/<id> | False | Updates a shopping list with a given id
-DELETE | /shoppinglists/<id> | False | Deletes a shopping list with a given id
+GET | /shoppinglists/<list_id> | False | View details of a shopping list
+PUT | /shoppinglists/<list_id> | False | Updates a shopping list with a given id
+DELETE | /shoppinglists/<list_id> | False | Deletes a shopping list with a given id
 
 ### Endpoints to create, update, view and delete a shopping list item
 HTTP Method|End point | Public Access|Action
 -----------|----------|--------------|------
-POST | /shoppinglists/<id>/items/ | False | Add an Item to a shopping list
-PUT | /shoppinglists/<id>/items/<item_id> | False | Update a shopping list item on a given list
-GET | /shoppinglists/<id>/items/ | False | View items in a particular shopping list
-DELETE | /shoppinglists/<id>/items/<item_id> | False | Delete an item from a given shopping list
+POST | /shoppinglists/<list_id>/items/ | False | Add an Item to a shopping list
+PUT | /shoppinglists/<list_id>/items/<item_id> | False | Update a shopping list item on a given list
+GET | /shoppinglists/<list_id>/items/ | False | View items in a particular shopping list
+DELETE | /shoppinglists/<list_id>/items/<item_id> | False | Delete an item from a given shopping list
 
 
