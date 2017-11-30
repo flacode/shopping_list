@@ -1,10 +1,10 @@
 FORMAT: 1A
-HOST: http://localhost:5000/
+HOST: http://localhost:5000/api
 
 # ShoppingList
 
 ShoppingList is a simple API that allows users to record, share and keep track of their shopping lists.
-
+- *base_url:* https://deployment-shopping-list-api.herokuapp.com/api
 # Group Users
 API enables users to create accounts and login into the application.
 A user object has the following attributes.
@@ -35,16 +35,11 @@ A user object has the following attributes.
             
 
 ##  User login [POST /auth/login]
-The user can login using their username and password. After login, the user gets an access token that they will use to access the private resources
+The user can login using their username or email address and password. After login, the user gets an access token that they will use to access the private resources
 Returns a `access_token` which is passed along as a header with all future requests to authenticate the user.
 You must provide the `Authorization: {access_token}` header in all other requests.
 
 + Request (application/json)
-
-    + Headers
-
-            Authorization: Basic b2RkeTpmbGF2aWE=
-
     + Body
     
             {
@@ -59,9 +54,25 @@ You must provide the `Authorization: {access_token}` header in all other request
             "message":"User logged in sucessfully."
         }
 
++ Request (application/json)
+
+    + Body
+    
+            {
+                "email": "email@email.com",
+                "password": "password"
+            }
+            
++ Response 200 (application/json)
+
+        {
+            "access_token": "access_token",
+            "message":"User logged in sucessfully."
+        }
+
             
 ## Reset password [POST /auth/reset-password]
-User can reset the password to their account by providing a valid username and new password.
+User can reset the password to their account by providing a valid username or email address and new password.
 
 + Request (application/json)
 
@@ -76,6 +87,67 @@ User can reset the password to their account by providing a valid username and n
             "message": "You have successfully changed your password."
         }
 
++ Request (application/json)
+
+        {
+            "email": "email@email.com",
+            "password": "new_password"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "message": "You have successfully changed your password."
+        }
+
+## View user accounts [GET /auth/users]
++ Response 200 (application/json)
+
+        [
+            {
+                "Users": [
+                    {
+                        "email": "email@email.com",
+                        "id": 1,
+                        "username": "username"
+                    }
+                ]
+            }
+        ]
+
+## User account [/auth/user/{user_id}]
+
+### View user account details [GET]
+User can view account details.
+
++ Parameters
+    + user_id: 1 (Number) - ID for requested user.
+    
++ Response 200 (application/json)
+
+        [
+            {
+                "user": [
+                    {
+                        "email": "email@email.com",
+                        "id": 1,
+                        "username": "username"
+                    }
+                ]
+            }
+        ]
+
+### Delete user account [DELETE]
+User can delete account.
+
++ Parameters
+    + user_id: 1 (Number) - ID for user to delete.
+    
++ Response 200 (application/json)
+
+        {
+            "message": "User account successfully deleted"
+        }
 
 # Group Shopping Lists 
 
