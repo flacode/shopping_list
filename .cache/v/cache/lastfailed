@@ -1,8 +1,0 @@
-{
-  "app/tests/test_user.py::UsersTestCase::test_expired_token": true,
-  "app/tests/test_user.py::UsersTestCase::test_token_encode_and_decode": true,
-  "app/tests/test_user.py::UsersTestCase::test_user_logout_with_invalid_token": true,
-  "tests/test_items.py": true,
-  "tests/test_shoppinglist.py": true,
-  "tests/test_user.py": true
-}
