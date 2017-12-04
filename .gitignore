@@ -1,5 +1,6 @@
-.cache
-.vscode
+.cache/
+.vscode/
 *.pyc
 __pycache__/
-
+htmlcov/
+.DS_Store

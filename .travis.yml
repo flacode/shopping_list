@@ -9,9 +9,9 @@ services:
   - postgresql
 # create database for the application
 before_script:
-  - psql -c 'create database shopping_list_tdb1;' -U postgres
+  - psql -c 'create database shoppinglistdb;' -U postgres
 # command to run tests
 script:
-  - python -m pytest --cov=. tests
+  - python -m pytest --cov=. app/tests
 after_success:
   - coveralls
