@@ -1,6 +1,7 @@
 # ShoppingList API
 
-[![Build Status](https://travis-ci.org/flacode/shopping_list.png)](https://travis-ci.org/flacode/shopping_list)     [![Coverage Status](https://coveralls.io/repos/github/flacode/shopping_list/badge.svg)](https://coveralls.io/github/flacode/shopping_list)
+[![Build Status](https://travis-ci.org/flacode/shopping_list.png)](https://travis-ci.org/flacode/shopping_list)
+[![Coverage Status](https://coveralls.io/repos/github/flacode/shopping_list/badge.svg?branch=master)](https://coveralls.io/github/flacode/shopping_list?branch=master)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/08889291e991002973ae/test_coverage)](https://codeclimate.com/github/flacode/shopping_list/test_coverage)
 [![Maintainability](https://api.codeclimate.com/v1/badges/08889291e991002973ae/maintainability)](https://codeclimate.com/github/flacode/shopping_list/maintainability)
 
