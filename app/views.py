@@ -1,4 +1,5 @@
 import json
+from validate_email import validate_email
 from flask import Blueprint, jsonify, make_response, request
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import Items, ShoppingLists, Users, BlacklistTokens
@@ -14,16 +15,25 @@ def create_account():
     data_password = data.get('password', None)
     if not data_username or not data_email or not data_password:
         response = {'message': 'Missing required fields for user'}
-        return make_response(jsonify(response)), 401
+        return make_response(jsonify(response)), 400
     # check if the username is unique
     user = Users.query.filter_by(username=data_username).first()
+    if not validate_email(data_email):
+        response = {'message': 'Invalid user email'}
+        return make_response(jsonify(response)), 400
     if not user:
-        new_user = Users(username=data_username, email=data_email, password=data_password)
+        new_user = Users(username=data_username,
+                         email=data_email,
+                         password=data_password)
         new_user.save()
-        response = {'message': 'You registered successfully. Please log in.'}
-        # return a response notifying the user that they registered successfully
+        response = {
+            'message': 'You registered successfully. Please log in.'
+            }
+        # notify the user that they registered successfully
         return make_response(jsonify(response)), 201
-    return make_response(jsonify({'message': 'User acccount already exists.'})), 202
+    response = {'message': 'User acccount already exists.'}
+    return make_response(jsonify(response)), 202
+
 
 @api.route('/auth/login', methods=['POST'])
 def login_user():
@@ -47,7 +57,7 @@ def login_user():
             'message': 'User account does not exist'
         }
         return make_response(jsonify(response)), 401
-    # compare the hashed password entered in the password and that in stored the database
+    # compare the hashed password and password provided
     if check_password_hash(user.password, data_password):
         # generate access token for authenticated user
         access_token = user.generate_token(user.id)
@@ -65,7 +75,9 @@ def login_user():
 
 @api.route('/auth/reset-password', methods=['POST'])
 def reset_password():
-    """API endpoint to change a user's password given a username or email"""
+    """API endpoint to change a user's password given
+    a username or email
+    """
     data = request.get_json()
     # check if username exists in the database
     username = data.get('username')
@@ -81,13 +93,15 @@ def reset_password():
     else:
         user = Users.query.filter_by(email=email).first()
     if not user:
-        return make_response(jsonify({'message': 'No user information found'})), 404
+        response = {'message': 'No user information found'}
+        return make_response(jsonify(response)), 404
     # hash the password before saving it
     user.password = generate_password_hash(password)
     user.save()
     response = {'message': 'You have successfully changed your password.'}
-    # return a response notifying the user that they reset their password successfully
+    # notifying the user that they reset their password successfully
     return make_response(jsonify(response)), 200
+
 
 @api.route('/auth/logout', methods=['POST'])
 def logout_user():
@@ -108,7 +122,9 @@ def logout_user():
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register or login.'})), 401
+    rep = {'message': 'Please register or login.'}
+    return make_response(jsonify(rep)), 401
+
 
 @api.route('/auth/users', methods=['GET'])
 def view_users():
@@ -121,29 +137,35 @@ def view_users():
         user_data['email'] = user.email
         output.append(user_data)
     if output == []:
-        return make_response(jsonify({'message':'No users registered yet'})), 200
+        response = {'message': 'No users registered yet'}
+        return make_response(jsonify(response)), 200
     return make_response(jsonify({"Users": output})), 200
+
 
 @api.route('/auth/user/<user_id>', methods=['GET'])
 def view_one_user(user_id):
     """View user account details given user id"""
     user = Users.query.filter_by(id=user_id).first()
     if not user:
-        return make_response(jsonify({'message': 'User account not found'})), 404
+        response = {'message': 'User account not found'}
+        return make_response(jsonify(response)), 404
     user_data = {}
     user_data['id'] = user.id
     user_data['username'] = user.username
     user_data['email'] = user.email
     return make_response(jsonify({'user': user_data})), 200
 
+
 @api.route('/auth/user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     """Delete user account given user id"""
     user = Users.query.filter_by(id=user_id).first()
     if not user:
-        return make_response(jsonify({'message': 'User account not found'})), 404
+        response = {'message': 'User account not found'}
+        return make_response(jsonify(response)), 404
     user.delete()
-    return make_response(jsonify({'message':'User account successfully deleted'})), 200
+    rep = {'message': 'User account successfully deleted'}
+    return make_response(jsonify(rep)), 200
 
 
 @api.route('/shoppinglists/', methods=['POST', 'GET'])
@@ -159,12 +181,18 @@ def create_view_shopping_list():
             if request.method == 'POST':
                 data = request.get_json()
                 if 'name' in data and 'due_date' in data:
-                    new_shopping_list = ShoppingLists(name=data['name'], user_id=user_id, due_date=data['due_date'])
+                    new_shopping_list = ShoppingLists(
+                        name=data['name'],
+                        user_id=user_id,
+                        due_date=data['due_date']
+                        )
                     new_shopping_list.save()
                     response = {'message': 'Shopping list created.'}
                     return make_response(jsonify(response)), 201
                 else:
-                    response = {'message': 'Missing attributes, shopping list not created.'}
+                    response = {
+                        'message': 'Missing attributes, shopping list not created.'
+                        }
                     return make_response(jsonify(response)), 400
             else:
                 # block for request.method == 'GET'
@@ -173,9 +201,16 @@ def create_view_shopping_list():
                 page = request.args.get('page', 1, type=int)
                 # check for a search key
                 if key:
-                    shopping_lists = ShoppingLists.query.filter(ShoppingLists.name.like("%"+key.strip()+"%")).filter_by(user_id=user_id).order_by(ShoppingLists.due_date).paginate(page, limit, False).items
+                    shopping_lists = ShoppingLists.query.filter(
+                        ShoppingLists.name.like("%"+key.strip()+"%")).filter_by(
+                            user_id=user_id).order_by(
+                                ShoppingLists.due_date).paginate(
+                                    page, limit, False).items
                 else:
-                    shopping_lists = ShoppingLists.query.filter_by(user_id=user_id).order_by(ShoppingLists.due_date).paginate(page, limit, False).items
+                    shopping_lists = ShoppingLists.query.filter_by(
+                        user_id=user_id).order_by(
+                            ShoppingLists.due_date).paginate(
+                                page, limit, False).items
                 # create a list of dictionary shopping lists
                 output = []
                 for shopping_list in shopping_lists:
@@ -209,15 +244,20 @@ def view_one_shopping_list(id):
         user_id = Users.decode_token(access_token)
         if not isinstance(user_id, str):
             # handle the request
-            shopping_list = ShoppingLists.query.filter_by(user_id=user_id, id=id).first()
+            shopping_list = ShoppingLists.query.filter_by(
+                user_id=user_id, id=id).first()
             # check if the shopping list exists in the database
             if shopping_list:
                 shopping_list_data = {}
                 shopping_list_data['id'] = shopping_list.id
                 shopping_list_data['name'] = shopping_list.name
                 shopping_list_data['due_date'] = shopping_list.due_date
-                return make_response(jsonify({"shopping list": shopping_list_data})), 200
-            return make_response(jsonify({"message": "Shopping list can not be found"})), 404
+                return make_response(jsonify({
+            "shopping list": shopping_list_data
+            })), 200
+            return make_response(jsonify({
+        "message": "Shopping list can not be found"}
+        )), 404
         else:
             # user is not legit, so the payload is an error message
             message = user_id
@@ -391,14 +431,25 @@ def delete_item_from_shopping_list(id, item_id):
             item = Items.query.filter_by(id=item_id).first()
             # validate if shopping list and item exist
             if not shopping_list:
-                return make_response(jsonify({"message": "Shopping list can not be found to update items"})), 404
+                return make_response(
+                                     jsonify({"message": "Shopping list can not be found to update items"})
+                                     ), 404
             if not item:
-                return make_response(jsonify({"message": "Item can not be found in shopping list"})), 404
+                return make_response(
+                                     jsonify({"message": "Item can not be found in shopping list"})
+                                     ), 404
             item.delete()
-            return make_response(jsonify({"message": "Item successfully deleted from shopping list"})), 200
+            return make_response(
+                                 jsonify(
+                                     {
+                                     "message": "Item successfully deleted from shopping list"
+                                     })
+                                ), 200
         else:
             # user is not legit, so the payload is an error message
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
-    return make_response(jsonify({'message': 'Please register or login.'})), 401
+    return make_response(
+                         jsonify({'message': 'Please register or login.'})
+                         ), 401

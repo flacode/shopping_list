@@ -71,7 +71,7 @@ class ShoppingLists(db.Model):
     due_date = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('Users',
-                           backref=db.backref('shopping_lists', lazy='dynamic'))
+                           backref=db.backref('shopping_lists', cascade="all,delete", lazy='dynamic'))
 
     def __init__(self, name, user_id, due_date=None):
         self.name = name
@@ -101,7 +101,7 @@ class Items(db.Model):
     status = db.Column(db.Boolean)
     shopping_list_id = db.Column(db.Integer, db.ForeignKey('shopping_lists.id'))
     shopping_list = db.relationship('ShoppingLists',
-                                    backref=db.backref('items', lazy='dynamic'))
+                                    backref=db.backref('items', cascade="all,delete", lazy='dynamic'))
 
     def __init__(self, name, quantity, shopping_list_id, bought_from=None, status=None):
         self.name = name

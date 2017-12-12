@@ -43,7 +43,18 @@ class UsersTestCase(unittest.TestCase):
                                    "email": "fnshem@gmail.com"
                                    }),
                                headers={'Content-Type': 'application/json'})
-        self.assertEqual(result.status_code, 401)
+        self.assertEqual(result.status_code, 400)
+
+    def test_user_account_creation_with_invalid_email(self):
+        """Test user registration with invalid email"""
+        result = self.app.post(url_prefix+'/auth/register',
+                               data=json.dumps({
+                                   "useame": "flacode",
+                                   "password": "flavia",
+                                   "email": "fnshemgmail.com"
+                                   }),
+                               headers={'Content-Type': 'application/json'})
+        self.assertEqual(result.status_code, 400)
 
     def test_user_account_creation_with_missing_fields(self):
         """Test user registration with missing fields"""
@@ -53,7 +64,7 @@ class UsersTestCase(unittest.TestCase):
                                    "password": "flavia"
                                    }),
                                headers={'Content-Type': 'application/json'})
-        self.assertEqual(result.status_code, 401)
+        self.assertEqual(result.status_code, 400)
 
     def test_user_account_creation_with_existing_account(self):
         """Test user account creation with an exixting username"""
