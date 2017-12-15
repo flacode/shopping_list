@@ -51,7 +51,7 @@ class UsersTestCase(unittest.TestCase):
                                data=json.dumps({
                                    "useame": "flacode",
                                    "password": "flavia",
-                                   "email": "fnshemgmail.com"
+                                   "email": "fnshem@gmaicom"
                                    }),
                                headers={'Content-Type': 'application/json'})
         self.assertEqual(result.status_code, 400)
@@ -202,7 +202,7 @@ class UsersTestCase(unittest.TestCase):
                                headers={'Content-Type': 'application/json'})
         self.assertEqual(result.status_code, 200)
 
-    def test_rest_password_with_mispelt_fields(self):
+    def test_reset_password_with_mispelt_fields(self):
         """Test reset password with mispelt fields"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
