@@ -197,8 +197,8 @@ def create_view_shopping_list():
             else:
                 # block for request.method == 'GET'
                 key = request.args.get('q', None)
-                limit = request.args.get('limit', 10, type=int)
-                page = request.args.get('page', 1, type=int)
+                limit = request.args.get('limit', None, type=int)
+                page = request.args.get('page', None, type=int)
                 # check for a search key
                 if key:
                     shopping_lists = ShoppingLists.query.filter(
@@ -223,6 +223,8 @@ def create_view_shopping_list():
                 if output == []:
                     if key:
                         message = "Shopping list to match the search key not found."
+                    elif page:
+                        message = "There are no shopping lists on this page."
                     else:
                         message = "No shopping lists created yet."
                     return make_response(jsonify({'message': message})), 200
@@ -252,12 +254,8 @@ def view_one_shopping_list(id):
                 shopping_list_data['id'] = shopping_list.id
                 shopping_list_data['name'] = shopping_list.name
                 shopping_list_data['due_date'] = shopping_list.due_date
-                return make_response(jsonify({
-            "shopping list": shopping_list_data
-            })), 200
-            return make_response(jsonify({
-        "message": "Shopping list can not be found"}
-        )), 404
+                return make_response(jsonify({"shopping list": shopping_list_data})), 200
+            return make_response(jsonify({"message": "Shopping list can not be found"})), 404
         else:
             # user is not legit, so the payload is an error message
             message = user_id
@@ -306,9 +304,13 @@ def delete_shopping_list(id):
             # check if shopping list to be deleted exists in the database
             shopping_list = ShoppingLists.query.filter_by(user_id=user_id, id=id).first()
             if not shopping_list:
-                return make_response(jsonify({"message": "Shopping list can not be found"})), 404
+                return make_response(jsonify(
+                    {"message": "Shopping list can not be found"})
+                                    ), 404
             shopping_list.delete()
-            return make_response(jsonify({"message": "Shopping list successfully deleted"})), 200
+            return make_response(jsonify(
+                {"message": "Shopping list successfully deleted"})
+                                ), 200
         else:
             # user is not legit, so the payload is an error message
             message = user_id
@@ -328,11 +330,17 @@ def add_item_to_shopping_list(id):
             # check if shopping list exists in the database
             shopping_list = ShoppingLists.query.filter_by(user_id=user_id, id=id).first()
             if not shopping_list:
-                return make_response(jsonify({"message": "Shopping list can not be found to add items"})), 404
+                return make_response(jsonify(
+                    {"message": "Shopping list can not be found to add items"})
+                                    ), 404
             data = request.get_json()
-            item = Items(name=data['name'], quantity=data['quantity'],
-                         shopping_list_id=id, bought_from=data['bought_from'],
-                         status=data['status'])
+            name = data.get('name', None)
+            quantity = data.get('quantity', None)
+            bought_from = data.get('bought_from', None)
+            status = data.get('status', None)
+            item = Items(name=name, quantity=quantity,
+                         shopping_list_id=id, bought_from=bought_from,
+                         status=status)
             item.save()
             return make_response(jsonify({"message": "Item added to shopping list"})), 201
         else:
