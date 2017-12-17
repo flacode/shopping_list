@@ -1,30 +1,11 @@
-import os
+"""Tests for the Users model"""
 import json
-import unittest
-import tempfile
-from app import app, url_prefix
-from app.models import db
+from app import url_prefix
+from .test_setup import BaseTestCase
 
 
-class UsersTestCase(unittest.TestCase):
+class UsersTestCase(BaseTestCase):
     """Testcases for the Users class"""
-    def setUp(self):
-        self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-        app.config['TESTING'] = True
-        self.app = app.test_client()
-        self.user = {
-            "username": "flacode",
-            "password": "flavia",
-            "email": "fnshem@gmail.com"
-            }
-        with app.app_context():
-            db.drop_all()
-            db.create_all()
-
-    def tearDown(self):
-        os.close(self.db_fd)
-        os.unlink(app.config['DATABASE'])
-
     def test_user_account_creation(self):
         """Test user login"""
         result = self.app.post(url_prefix+'/auth/register',

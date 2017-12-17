@@ -1,26 +1,13 @@
-import os
+"""Tests for the ShoppingLists model"""
 import json
-import unittest
-import tempfile
-from base64 import b64encode
-from app import app, db, url_prefix
+from app import url_prefix
+from .test_setup import BaseTestCase
 
 
-class ShoppingListTestCase(unittest.TestCase):
+class ShoppingListTestCase(BaseTestCase):
     """Testcases for the ShoppingLists class"""
     def setUp(self):
-        self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-        app.testing = True
-        self.app = app.test_client()
-        self.user = {
-            "username": "flacode",
-            "password": "flavia",
-            "email": "fnshem@gmail.com"
-            }
-        self.shopping_list = {
-            "name": "bakery",
-            "due_date": "2017-08-17"
-            }
+        super(ShoppingListTestCase, self).setUp()
         self.shopping_list1 = {
             "name": "food",
             "due_date": "2017-08-18"
@@ -30,21 +17,15 @@ class ShoppingListTestCase(unittest.TestCase):
             "due_date": "2017-08-19"
             }
         self.shopping_list_error = {"name": "food store"}
-        with app.app_context():
-            db.drop_all()
-            db.create_all()
-
-    def tearDown(self):
-        os.close(self.db_fd)
-        os.unlink(app.config['DATABASE'])
 
     def login_user(self):
+        """Method to login user"""
         res = self.app.post(url_prefix+'/auth/login',
-                             data=json.dumps({
-                                 "username": "flacode",
-                                 "password": "flavia"
-                                 }),
-                             headers={'Content-Type': 'application/json'})
+                            data=json.dumps({
+                                "username": "flacode",
+                                "password": "flavia"
+                                }),
+                            headers={'Content-Type': 'application/json'})
         return json.loads(res.data.decode())['access_token']
 
     def test_create_for_authenticated_user(self):

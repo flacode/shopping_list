@@ -338,9 +338,13 @@ def add_item_to_shopping_list(id):
             quantity = data.get('quantity', None)
             bought_from = data.get('bought_from', None)
             status = data.get('status', None)
-            item = Items(name=name, quantity=quantity,
-                         shopping_list_id=id, bought_from=bought_from,
-                         status=status)
+            item = Items.query.filter_by(name=name).first()
+            if item:
+                item.quantity += quantity
+            else:
+                item = Items(name=name, quantity=quantity,
+                             shopping_list_id=id, bought_from=bought_from,
+                             status=status)
             item.save()
             return make_response(jsonify({"message": "Item added to shopping list"})), 201
         else:

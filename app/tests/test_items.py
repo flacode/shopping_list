@@ -1,42 +1,29 @@
-import os
+"""Tests for the Items model"""
 import json
-import unittest
-import tempfile
-from base64 import b64encode
-from app import app, url_prefix
-from app.models import db
+from app import url_prefix
+from app.models import app, db, Items
+from .test_setup import BaseTestCase
 
 
-class ItemsTestCase(unittest.TestCase):
+class ItemsTestCase(BaseTestCase):
     """Testcases for the Items class"""
     def setUp(self):
-        self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-        app.testing = True
-        self.app = app.test_client()
-        self.user = {
-            "username": "flacode",
-            "password": "flavia",
-            "email": "fnshem@gmail.com"
-            }
-        self.shopping_list = {
-            "name": "bakery",
-            "due_date": "2017-08-17"
-            }
+        super(ItemsTestCase, self).setUp()
         self.item = {
             "name": "sweetpotatoes",
             "quantity": 6,
             "bought_from": "kalerwe",
             "status": "false"
             }
-        with app.app_context():
-            db.drop_all()
-            db.create_all()
-
-    def tearDown(self):
-        os.close(self.db_fd)
-        os.unlink(app.config['DATABASE'])
+        self.item2 = {
+            "name": "sweetpotatoes",
+            "quantity": 9,
+            "bought_from": "kalerwe",
+            "status": "false"
+            }
 
     def login_user(self):
+        """Method to create new user"""
         res = self.app.post(url_prefix+'/auth/login',
                             data=json.dumps({
                                 "username": "flacode",
@@ -108,6 +95,37 @@ class ItemsTestCase(unittest.TestCase):
                                  })
         self.assertEqual(item.status_code, 201)
         self.assertIn('Item added to shopping list', str(item.data))
+
+    def test_existing_item_to_shopping_list(self):
+        """
+            Test add item for authenticated user adding an
+            item that is in the database already.
+        """
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
+                      headers={'Content-Type': 'application/json'})
+        # obtain access token
+        access_token = self.login_user()
+        # create shopping list and add items to shopping list
+        self.app.post(url_prefix+'/shoppinglists/',
+                      data=json.dumps(self.shopping_list),
+                      headers={
+                          'Content-Type': 'application/json',
+                          'Authorization': access_token
+                          })
+        self.app.post(url_prefix+'/shoppinglists/1/items/',
+                      data=json.dumps(self.item),
+                      headers={
+                          'Content-Type': 'application/json',
+                          'Authorization': access_token
+                          })
+        self.app.post(url_prefix+'/shoppinglists/1/items/',
+                      data=json.dumps(self.item2),
+                      headers={
+                          'Content-Type': 'application/json',
+                          'Authorization': access_token
+                          })
+        with app.app_context():
+            self.assertEqual(Items.query.count(), 1)
 
     def test_update_item_without_access_token(self):
         """Test update item in shopping list without access token"""
