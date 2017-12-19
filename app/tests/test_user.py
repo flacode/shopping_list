@@ -15,8 +15,11 @@ class UsersTestCase(BaseTestCase):
                                    })
         self.assertEqual(result.status_code, 201)
 
-    def test_user_account_creation_with_incorrect_fields(self):
-        """Test user registration with mispelt username"""
+    def test_account_creation_incorrect_fields(self):
+        """
+            Test user registration with an incorrect field
+            for example mispelt username.
+        """
         result = self.app.post(url_prefix+'/auth/register',
                                data=json.dumps({
                                    "useame": "flacode",
@@ -26,18 +29,29 @@ class UsersTestCase(BaseTestCase):
                                headers={'Content-Type': 'application/json'})
         self.assertEqual(result.status_code, 400)
 
-    def test_user_account_creation_with_invalid_email(self):
+    def test_account_creation_invalid_email(self):
         """Test user registration with invalid email"""
         result = self.app.post(url_prefix+'/auth/register',
                                data=json.dumps({
-                                   "useame": "flacode",
+                                   "username": "flacode",
+                                   "password": "flavia",
+                                   "email": "fnshemgmaicom"
+                                   }),
+                               headers={'Content-Type': 'application/json'})
+        self.assertEqual(result.status_code, 400)
+
+    def test_account_creation_invalid_username(self):
+        """Test user registration with invalid username"""
+        result = self.app.post(url_prefix+'/auth/register',
+                               data=json.dumps({
+                                   "username": "123",
                                    "password": "flavia",
                                    "email": "fnshem@gmaicom"
                                    }),
                                headers={'Content-Type': 'application/json'})
         self.assertEqual(result.status_code, 400)
 
-    def test_user_account_creation_with_missing_fields(self):
+    def test_account_creation_with_missing_fields(self):
         """Test user registration with missing fields"""
         result = self.app.post(url_prefix+'/auth/register',
                                data=json.dumps({
@@ -47,7 +61,7 @@ class UsersTestCase(BaseTestCase):
                                headers={'Content-Type': 'application/json'})
         self.assertEqual(result.status_code, 400)
 
-    def test_user_account_creation_with_existing_account(self):
+    def test_account_creation_with_existing_account(self):
         """Test user account creation with an exixting username"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -57,7 +71,7 @@ class UsersTestCase(BaseTestCase):
                                headers={'Content-Type': 'application/json'})
         self.assertEqual(result.status_code, 202)
 
-    def test_user_login_with_username(self):
+    def test_login_with_username(self):
         """Test user login with correct credentials"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -73,7 +87,7 @@ class UsersTestCase(BaseTestCase):
         self.assertIn('User logged in successfully', str(result.data))
         self.assertTrue(result_data['access_token'])
 
-    def test_user_login_with_email(self):
+    def test_login_with_email(self):
         """Test user login with correct credentials"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -89,7 +103,7 @@ class UsersTestCase(BaseTestCase):
         self.assertIn('User logged in successfully', str(result.data))
         self.assertTrue(result_data['access_token'])
 
-    def test_user_login_with_incorrect_password(self):
+    def test_login_with_incorrect_password(self):
         """Test user login with incorrect password"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -103,7 +117,7 @@ class UsersTestCase(BaseTestCase):
         self.assertEqual(result.status_code, 401)
         self.assertIn('Invalid user credentials', str(result.data))
 
-    def test_user_login_with_non_existing_account(self):
+    def test_login_with_non_existing_account(self):
         """Test user login with a username that is not registered"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -117,7 +131,7 @@ class UsersTestCase(BaseTestCase):
         self.assertEqual(result.status_code, 401)
         self.assertIn('User account does not exist', str(result.data))
 
-    def test_user_login_with_incorrect_fields(self):
+    def test_login_with_incorrect_fields(self):
         """Test user login with incorrect fields supplied"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -132,7 +146,7 @@ class UsersTestCase(BaseTestCase):
         self.assertIn('Fields required for login not supplied',
                       str(result.data))
 
-    def test_user_login_with_missing_fields(self):
+    def test_login_with_missing_fields(self):
         """Test user login with missing fields"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -145,7 +159,7 @@ class UsersTestCase(BaseTestCase):
                       str(result.data))
 
     def test_reset_password_with_username(self):
-        """Test user reset password"""
+        """Test user reset password with username"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
@@ -171,7 +185,7 @@ class UsersTestCase(BaseTestCase):
                       headers={'Content-Type': 'application/json'})
         reset = self.app.post(url_prefix+'/auth/reset-password',
                               data=json.dumps({"email": "fnshem@gmail.com",
-                                              "password": "new_password"}),
+                                               "password": "new_password"}),
                               headers={'Content-Type': 'application/json'})
         self.assertEqual(reset.status_code, 200)
         self.assertIn('You have successfully changed your password.',
@@ -190,13 +204,13 @@ class UsersTestCase(BaseTestCase):
                       headers={'Content-Type': 'application/json'})
         reset = self.app.post(url_prefix+'/auth/reset-password',
                               data=json.dumps({"email": "fnshem@gmail.com",
-                                              "pswd": "new_password"}),
+                                               "pswd": "new_password"}),
                               headers={'Content-Type': 'application/json'})
         self.assertEqual(reset.status_code, 401)
         self.assertIn('Fields required for reset password not supplied',
                       str(reset.data))
 
-    def test_user_reset_password_with_missing_fields(self):
+    def test_reset_password_with_missing_fields(self):
         """Test reset password with some fields missing"""
         self.app.post(url_prefix+'/auth/register',
                       data=json.dumps(self.user),
@@ -208,13 +222,13 @@ class UsersTestCase(BaseTestCase):
         self.assertIn('Fields required for reset password not supplied',
                       str(reset.data))
 
-    def test_reset_password_with_non_existent_user(self):
-        """Test user reset password"""
+    def test_reset_password_for_non_existent_user(self):
+        """Test user reset password for non exixtent user"""
         self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
                       headers={'Content-Type': 'application/json'})
         reset = self.app.post(url_prefix+'/auth/reset-password',
                               data=json.dumps({"username": "sammy",
-                                              "password": "new_password"}),
+                                               "password": "new_password"}),
                               headers={'Content-Type': 'application/json'})
         self.assertEqual(reset.status_code, 404)
         self.assertIn('No user information found', str(reset.data))
@@ -241,7 +255,7 @@ class UsersTestCase(BaseTestCase):
         self.assertIn('You are logged out. Please log in again.',
                       str(logout.data))
 
-    def test_user_with_invalid_token(self):
+    def test_invalid_token(self):
         """test user logout with invalid token"""
         result = self.app.post(url_prefix+'/auth/logout',
                                headers={'Content-Type': 'application/json',

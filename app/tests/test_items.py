@@ -21,6 +21,17 @@ class ItemsTestCase(BaseTestCase):
             "bought_from": "kalerwe",
             "status": "false"
             }
+        self.item3 = {
+            "name": "sweetpotatoes",
+            "quantity": "ahha",
+            "bought_from": "kalerwe",
+            "status": "false"
+            }
+        self.item_error = {
+            "quantity": "4",
+            "bought_from": "kalerwe",
+            "status": "false"
+            }
 
     def login_user(self):
         """Method to create new user"""
@@ -96,6 +107,56 @@ class ItemsTestCase(BaseTestCase):
         self.assertEqual(item.status_code, 201)
         self.assertIn('Item added to shopping list', str(item.data))
 
+    def test_add_with_missing_fields(self):
+        """
+            Test add item for authenticated user with an
+            existent shopping list but missing fields.
+        """
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
+                      headers={'Content-Type': 'application/json'})
+        # obtain access token
+        access_token = self.login_user()
+        # create shopping list and add items to shopping list
+        self.app.post(url_prefix+'/shoppinglists/',
+                      data=json.dumps(self.shopping_list),
+                      headers={
+                          'Content-Type': 'application/json',
+                          'Authorization': access_token
+                          })
+        item = self.app.post(url_prefix+'/shoppinglists/1/items/',
+                             data=json.dumps(self.item_error),
+                             headers={
+                                 'Content-Type': 'application/json',
+                                 'Authorization': access_token
+                                 })
+        self.assertEqual(item.status_code, 400)
+        self.assertIn('Missing required fields for creating item', str(item.data))
+
+    def test_add_item_with_invalid_quantity(self):
+        """
+            Test add item for authenticated user with an
+            existent shopping list with string quantity.
+        """
+        self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
+                      headers={'Content-Type': 'application/json'})
+        # obtain access token
+        access_token = self.login_user()
+        # create shopping list and add items to shopping list
+        self.app.post(url_prefix+'/shoppinglists/',
+                      data=json.dumps(self.shopping_list),
+                      headers={
+                          'Content-Type': 'application/json',
+                          'Authorization': access_token
+                          })
+        item = self.app.post(url_prefix+'/shoppinglists/1/items/',
+                             data=json.dumps(self.item3),
+                             headers={
+                                 'Content-Type': 'application/json',
+                                 'Authorization': access_token
+                                 })
+        self.assertEqual(item.status_code, 400)
+        self.assertIn('Quantity must be a number', str(item.data))
+
     def test_existing_item_to_shopping_list(self):
         """
             Test add item for authenticated user adding an
@@ -146,7 +207,8 @@ class ItemsTestCase(BaseTestCase):
         self.assertEqual(forged_token.status_code, 401)
         self.assertIn('Invalid token. Please register or login',
                       str(forged_token.data)
-                      )
+                     )
+
     def test_update_item_without_shopping_list(self):
         """
             Test update item in shopping list for authenticated user but
@@ -206,13 +268,13 @@ class ItemsTestCase(BaseTestCase):
                       data=json.dumps(self.item),
                       headers={'Content-Type': 'application/json',
                                'Authorization': access_token}
-                      )
+                     )
         # update item in shopping list
         update_item = self.app.put(url_prefix+'/shoppinglists/1/items/1',
                                    data=json.dumps({"name": "new_name"}),
                                    headers={'Content-Type': 'application/json',
                                             'Authorization': access_token}
-                                   )
+                                  )
         self.assertEqual(update_item.status_code, 200)
         self.assertIn('Item updated', str(update_item.data))
 
@@ -286,7 +348,7 @@ class ItemsTestCase(BaseTestCase):
                       data=json.dumps(self.item),
                       headers={'Content-Type': 'application/json',
                                'Authorization': access_token}
-                      )
+                     )
         shopping_list = self.app.get(url_prefix+'/shoppinglists/1/items/',
                                      headers={'Authorization': access_token})
         self.assertEqual(shopping_list.status_code, 200)
@@ -303,19 +365,19 @@ class ItemsTestCase(BaseTestCase):
 
     def test_delete_item_with_invalid_token(self):
         """
-            Test delete item from shopping list given its id 
+            Test delete item from shopping list given its id
             but providing an  invalid access token.
         """
         forged_token = self.app.delete(url_prefix+'/shoppinglists/1/items/1',
                                        headers={'Authorization': 'hddhhd'}
-                                       )
+                                      )
         self.assertEqual(forged_token.status_code, 401)
         self.assertIn('Invalid token. Please register or login',
                       str(forged_token.data))
 
     def test_delete_item_without_shopping_list(self):
         """
-            Test delete item from shopping list given its id 
+            Test delete item from shopping list given its id
             for authenticated user without a shopping list.
         """
         self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
@@ -330,7 +392,7 @@ class ItemsTestCase(BaseTestCase):
 
     def test_delete_non_existing_item(self):
         """
-            Test delete item from shopping list given its id 
+            Test delete item from shopping list given its id
             for authenticated user with an empty shopping list
         """
         self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
@@ -347,11 +409,11 @@ class ItemsTestCase(BaseTestCase):
         self.assertEqual(deleted.status_code, 404)
         self.assertIn('Item can not be found in shopping list',
                       str(deleted.data)
-                      )
+                     )
 
     def test_delete_existing_item(self):
         """
-            Test delete item from shopping list given its id 
+            Test delete item from shopping list given its id
             for authenticated user.
         """
         self.app.post(url_prefix+'/auth/register', data=json.dumps(self.user),
@@ -370,7 +432,7 @@ class ItemsTestCase(BaseTestCase):
                                'Authorization': access_token})
         deleted = self.app.delete(url_prefix+'/shoppinglists/1/items/1',
                                   headers={'Authorization': access_token}
-                                  )
+                                 )
         self.assertEqual(deleted.status_code, 200)
         self.assertIn('Item successfully deleted from shopping list',
                       str(deleted.data))

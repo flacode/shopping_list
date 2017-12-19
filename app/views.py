@@ -1,4 +1,5 @@
 import json
+import re
 from validate_email import validate_email
 from flask import Blueprint, jsonify, make_response, request
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -18,6 +19,10 @@ def create_account():
         return make_response(jsonify(response)), 400
     # check if the username is unique
     user = Users.query.filter_by(username=data_username).first()
+    # check if username is a string
+    if not re.match(r"^[A-Za-z]\w+$", data_username):
+        response = {'message': 'Invalid username'}
+        return make_response(jsonify(response)), 400
     if not validate_email(data_email):
         response = {'message': 'Invalid user email'}
         return make_response(jsonify(response)), 400
@@ -336,13 +341,21 @@ def add_item_to_shopping_list(id):
             data = request.get_json()
             name = data.get('name', None)
             quantity = data.get('quantity', None)
+            if not name or not quantity:
+                response = {'message': 'Missing required fields for creating item'}
+                return make_response(jsonify(response)), 400
+            try:
+                quantity = float(quantity)
+            except ValueError:
+                response = {'message': 'Quantity must be a number'}
+                return make_response(jsonify(response)), 400
             bought_from = data.get('bought_from', None)
             status = data.get('status', None)
-            item = Items.query.filter_by(name=name).first()
+            item = Items.query.filter_by(name=name.lower()).first()
             if item:
                 item.quantity += quantity
             else:
-                item = Items(name=name, quantity=quantity,
+                item = Items(name=name.lower(), quantity=quantity,
                              shopping_list_id=id, bought_from=bought_from,
                              status=status)
             item.save()
@@ -367,9 +380,16 @@ def update_item_in_shopping_list(id, item_id):
             shopping_list = ShoppingLists.query.filter_by(user_id=user_id, id=id).first()
             item = Items.query.filter_by(id=item_id).first()
             if not shopping_list:
-                return make_response(jsonify({"message": "Shopping list can not be found to update items"})), 404
+                return make_response(
+                    jsonify(
+                        {
+                            "message": "Shopping list can not be found to update items"
+                        })
+                    ), 404
             if not item:
-                return make_response(jsonify({"message": "Item can not be found in shopping list"})), 404
+                return make_response(
+                    jsonify({"message": "Item can not be found in shopping list"})
+                    ), 404
             # check which parameters have been updated in the request
             data = request.get_json()
             if 'name' in json.dumps(data):
@@ -377,9 +397,13 @@ def update_item_in_shopping_list(id, item_id):
             if 'quantity' in json.dumps(data):
                 item.quantity = data['quantity']
             if 'shopping_list_id' in json.dumps(data):
-                new_shopping_list = ShoppingLists.query.filter_by(id=data['shopping_list_id']).first()
+                new_shopping_list = ShoppingLists.query.filter_by(
+                    id=data['shopping_list_id']
+                    ).first()
                 if not new_shopping_list:
-                    return make_response(jsonify({"message": "Can not move item to not existent shopping list"})), 404
+                    return make_response(
+                        jsonify({"message": "Can not move item to not existent shopping list"})
+                        ), 404
                 item.shopping_list_id = data['shopping_list_id']
             if 'bought_from' in data:
                 item.bought_from = data['bought_from']
@@ -444,24 +468,21 @@ def delete_item_from_shopping_list(id, item_id):
             # validate if shopping list and item exist
             if not shopping_list:
                 return make_response(
-                                     jsonify({"message": "Shopping list can not be found to update items"})
-                                     ), 404
+                    jsonify({"message": "Shopping list can not be found to update items"})
+                    ), 404
             if not item:
                 return make_response(
-                                     jsonify({"message": "Item can not be found in shopping list"})
-                                     ), 404
+                    jsonify({"message": "Item can not be found in shopping list"})
+                    ), 404
             item.delete()
             return make_response(
-                                 jsonify(
-                                     {
-                                     "message": "Item successfully deleted from shopping list"
-                                     })
-                                ), 200
+                jsonify({"message": "Item successfully deleted from shopping list"})
+                ), 200
         else:
             # user is not legit, so the payload is an error message
             message = user_id
             response = {'message': message}
             return make_response(jsonify(response)), 401
     return make_response(
-                         jsonify({'message': 'Please register or login.'})
-                         ), 401
+        jsonify({'message': 'Please register or login.'})
+    ), 401
