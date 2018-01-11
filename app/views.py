@@ -7,6 +7,20 @@ from app.models import Items, ShoppingLists, Users, BlacklistTokens
 
 api = Blueprint('api', __name__, url_prefix='/api')
 
+@api.after_request
+def apply_cross_origin_header(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS," \
+                                                       "POST,PUT,DELETE"
+    response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-"\
+        "Headers, Origin,Accept, X-Requested-With, Content-Type, " \
+        "Access-Control-Request-Method, Access-Control-Request-Headers," \
+        "Access-Control-Allow-Origin, Authorization"
+
+    return response
+
 @api.route('/auth/register', methods=['POST'])
 def create_account():
     """API endpoint to create new user"""
@@ -16,16 +30,20 @@ def create_account():
     data_password = data.get('password', None)
     if not data_username or not data_email or not data_password:
         response = {'message': 'Missing required fields for user'}
-        return make_response(jsonify(response)), 400
-    # check if the username is unique
-    user = Users.query.filter_by(username=data_username).first()
+        return make_response(jsonify(response)), 409
     # check if username is a string
     if not re.match(r"^[A-Za-z]\w+$", data_username):
         response = {'message': 'Invalid username'}
-        return make_response(jsonify(response)), 400
+        return make_response(jsonify(response)), 409
     if not validate_email(data_email):
         response = {'message': 'Invalid user email'}
-        return make_response(jsonify(response)), 400
+        return make_response(jsonify(response)), 409
+    # check if the username or email is unique
+    user = Users.query.filter_by(
+        username=data_username
+        ).first() or Users.query.filter_by(
+            email=data_email
+            ).first()
     if not user:
         new_user = Users(username=data_username,
                          email=data_email,
@@ -37,7 +55,7 @@ def create_account():
         # notify the user that they registered successfully
         return make_response(jsonify(response)), 201
     response = {'message': 'User acccount already exists.'}
-    return make_response(jsonify(response)), 202
+    return make_response(jsonify(response)), 409
 
 
 @api.route('/auth/login', methods=['POST'])

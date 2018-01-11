@@ -27,7 +27,7 @@ class UsersTestCase(BaseTestCase):
                                    "email": "fnshem@gmail.com"
                                    }),
                                headers={'Content-Type': 'application/json'})
-        self.assertEqual(result.status_code, 400)
+        self.assertEqual(result.status_code, 409)
 
     def test_account_creation_invalid_email(self):
         """Test user registration with invalid email"""
@@ -38,7 +38,7 @@ class UsersTestCase(BaseTestCase):
                                    "email": "fnshemgmaicom"
                                    }),
                                headers={'Content-Type': 'application/json'})
-        self.assertEqual(result.status_code, 400)
+        self.assertEqual(result.status_code, 409)
 
     def test_account_creation_invalid_username(self):
         """Test user registration with invalid username"""
@@ -49,7 +49,7 @@ class UsersTestCase(BaseTestCase):
                                    "email": "fnshem@gmaicom"
                                    }),
                                headers={'Content-Type': 'application/json'})
-        self.assertEqual(result.status_code, 400)
+        self.assertEqual(result.status_code, 409)
 
     def test_account_creation_with_missing_fields(self):
         """Test user registration with missing fields"""
@@ -59,7 +59,7 @@ class UsersTestCase(BaseTestCase):
                                    "password": "flavia"
                                    }),
                                headers={'Content-Type': 'application/json'})
-        self.assertEqual(result.status_code, 400)
+        self.assertEqual(result.status_code, 409)
 
     def test_account_creation_with_existing_account(self):
         """Test user account creation with an exixting username"""
@@ -69,7 +69,7 @@ class UsersTestCase(BaseTestCase):
         result = self.app.post(url_prefix+'/auth/register',
                                data=json.dumps(self.user),
                                headers={'Content-Type': 'application/json'})
-        self.assertEqual(result.status_code, 202)
+        self.assertEqual(result.status_code, 409)
 
     def test_login_with_username(self):
         """Test user login with correct credentials"""

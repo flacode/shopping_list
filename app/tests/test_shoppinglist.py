@@ -259,7 +259,7 @@ class ShoppingListTestCase(BaseTestCase):
         self.assertEqual(no_token.status_code, 401)
         self.assertIn('Please register or login.', str(no_token.data))
 
-    def test_update_with_invalid_access_token(self):
+    def test_update_with_invalid_token(self):
         """
             Test if user can update shopping list details
             with invalid access token
@@ -273,7 +273,7 @@ class ShoppingListTestCase(BaseTestCase):
         self.assertIn('Invalid token. Please register or login',
                       str(forged_token.data))
 
-    def test_update_non_existent_shopping_list_with_valid_access_token(self):
+    def test_update_non_existent_shopping_list(self):
         """
             Test if user can update shopping list details with
             valid access token for non existing shopping list

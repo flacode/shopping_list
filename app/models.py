@@ -96,12 +96,15 @@ class Items(db.Model):
     """Class for the Items in a shopping list"""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80))
-    quantity = db.Column(db.Integer)
+    quantity = db.Column(db.Float)
     bought_from = db.Column(db.String(120))
     status = db.Column(db.Boolean)
     shopping_list_id = db.Column(db.Integer, db.ForeignKey('shopping_lists.id'))
     shopping_list = db.relationship('ShoppingLists',
-                                    backref=db.backref('items', cascade="all,delete", lazy='dynamic'))
+                                    backref=db.backref('items',
+                                                       cascade="all,delete",
+                                                       lazy='dynamic')
+                                   )
 
     def __init__(self, name, quantity, shopping_list_id, bought_from=None, status=None):
         self.name = name
